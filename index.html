@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CASH COUNT - Retro Edition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Press Start 2P', monospace;
+    background: #0a0a1a;
+    color: #00ff41;
+    min-height: 100vh;
+    padding: 12px;
+    overflow-x: hidden;
+  }
+  h1 {
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #ffff00;
+    text-shadow: 0 0 10px #ffff00, 0 0 20px #ff8800;
+    letter-spacing: 2px;
+    line-height: 1.4;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 8px;
+    color: #888;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .section-label {
+    font-size: 9px;
+    color: #ff8800;
+    text-align: center;
+    margin: 12px 0 6px;
+    text-shadow: 0 0 6px #ff8800;
+    letter-spacing: 2px;
+    border-top: 1px dashed #333;
+    padding-top: 10px;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 4px;
+    border-bottom: 1px solid #1a1a3a;
+    gap: 8px;
+  }
+  .row.active-row {
+    background: #1a1a3a;
+    border: 1px solid #00ff41;
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(0,255,65,0.15);
+  }
+  .denom-label {
+    font-size: 8px;
+    width: 110px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .value-display {
+    font-size: 8px;
+    color: #aaa;
+    width: 60px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  input[type="number"] {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    background: #111;
+    color: #00ff41;
+    border: 2px solid #333;
+    padding: 10px 4px;
+    width: 70px;
+    text-align: center;
+    outline: none;
+    border-radius: 4px;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+  input:focus {
+    border-color: #00ff41;
+    box-shadow: 0 0 10px rgba(0,255,65,0.3);
+  }
+  .nav-btns { display: flex; gap: 4px; flex-shrink: 0; }
+  .nav-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    background: #222;
+    color: #00ff41;
+    border: 2px solid #444;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    line-height: 1;
+    touch-action: manipulation;
+  }
+  .nav-btn:hover { border-color: #00ff41; }
+  .nav-btn.prev-btn { color: #ff8800; }
+  .grand-total-section {
+    margin-top: 16px;
+    padding: 12px;
+    border: 3px double #00ff41;
+    background: #0d0d2a;
+    text-align: center;
+  }
+  .grand-total-label {
+    font-size: 10px;
+    color: #ffff00;
+    text-shadow: 0 0 6px #ffff00;
+    margin-bottom: 6px;
+  }
+  .grand-total-value {
+    font-size: 24px;
+    color: #00ff41;
+    text-shadow: 0 0 12px #00ff41;
+    margin-bottom: 8px;
+  }
+  .status-indicator {
+    margin-top: 6px;
+    font-size: 12px;
+    padding: 8px;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-area {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .total-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    background: #004400;
+    color: #00ff41;
+    border: 3px solid #00ff41;
+    padding: 16px 24px;
+    cursor: pointer;
+    border-radius: 6px;
+    width: 100%;
+    animation: pulse-total 1.5s infinite;
+  }
+  .total-btn:active { background: #00ff41; color: #000; }
+  @keyframes pulse-total {
+    0%, 100% { box-shadow: 0 0 10px rgba(0,255,65,0.3); }
+    50% { box-shadow: 0 0 25px rgba(0,255,65,0.6); }
+  }
+  .clear-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    background: #330000;
+    color: #ff4444;
+    border: 2px solid #ff4444;
+    padding: 12px 24px;
+    cursor: pointer;
+    border-radius: 4px;
+    width: 100%;
+  }
+  .clear-btn:active { background: #ff4444; color: #000; }
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-box {
+    background: #111;
+    border: 3px solid #ff4444;
+    padding: 24px;
+    text-align: center;
+    max-width: 340px;
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(255,68,68,0.4);
+    width: 90%;
+  }
+  .modal-box p {
+    font-size: 10px;
+    line-height: 1.6;
+    color: #ff8800;
+    margin-bottom: 20px;
+  }
+  .modal-btns { display: flex; gap: 10px; justify-content: center; }
+  .modal-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 2px solid;
+  }
+  .modal-btn.yes { background: #330000; color: #ff4444; border-color: #ff4444; }
+  .modal-btn.yes:active { background: #ff4444; color: #000; }
+  .modal-btn.no { background: #002200; color: #00ff41; border-color: #00ff41; }
+  .modal-btn.no:active { background: #00ff41; color: #000; }
+  .scanline {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+    z-index: 999;
+  }
+  .winner-screen {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, #004400 0%, #002200 100%);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  .winner-screen.active { display: flex; }
+  .winner-title {
+    font-size: 28px;
+    color: #00ff41;
+    text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41;
+    margin-bottom: 20px;
+    animation: winner-bounce 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes winner-bounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+  }
+  .winner-message {
+    font-size: 12px;
+    color: #ffff00;
+    text-align: center;
+    line-height: 1.8;
+  }
+  .restart-btn {
+    margin-top: 24px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 12px 24px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .winner-restart {
+    background: #004400;
+    color: #00ff41;
+    border: 2px solid #00ff41;
+  }
+  .winner-restart:active { background: #00ff41; color: #000; }
+  .loser-screen {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, #440000 0%, #220000 100%);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  .loser-screen.active { display: flex; }
+  .loser-face {
+    font-size: 60px;
+    margin-bottom: 10px;
+    animation: loser-tongue 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes loser-tongue {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1) rotate(5deg); }
+  }
+  .loser-title {
+    font-size: 28px;
+    color: #ff0000;
+    text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
+    margin-bottom: 10px;
+  }
+  .loser-message {
+    font-size: 10px;
+    color: #ff8800;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 300px;
+  }
+  .thumbs-down {
+    font-size: 40px;
+    margin: 10px 0;
+    animation: thumbs-shake 0.3s ease-in-out infinite;
+  }
+  @keyframes thumbs-shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+  }
+  .loser-restart {
+    background: #330000;
+    color: #ff4444;
+    border: 2px solid #ff4444;
+  }
+  .loser-restart:active { background: #ff4444; color: #000; }
+  .confetti-container {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .confetti {
+    position: absolute;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(100vh) rotate(720deg); }
+  }
+  .breakdown {
+    margin-top: 12px;
+    padding: 8px;
+    border: 1px dashed #333;
+    font-size: 7px;
+    line-height: 1.8;
+    color: #666;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .breakdown span { color: #aaa; }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+
+<h1>&#x1F4B0; CASH COUNT &#x1F4B0;</h1>
+<p class="subtitle">RETRO EDITION &#x2014; TARGET: $100.00</p>
+
+<div id="fieldsContainer"></div>
+
+<div class="grand-total-section">
+  <div class="grand-total-label">&#x2605; GRAND TOTAL &#x2605;</div>
+  <div class="grand-total-value" id="grandTotal">$0.00</div>
+  <div class="status-indicator" id="statusIndicator" style="color:#888;">COUNT TO BEGIN</div>
+  <div class="breakdown" id="breakdown"><span>No entries yet</span></div>
+</div>
+
+<div class="btn-area">
+  <button class="total-btn" onclick="finishCounting()">TOTAL / FINISHED</button>
+  <button class="clear-btn" onclick="showClearModal()">&#x239A; CLEAR ALL</button>
+</div>
+
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-box">
+    <p>ARE YOU SURE YOU WANT TO CLEAR ALL ENTRIES? THIS CANNOT BE UNDONE!</p>
+    <div class="modal-btns">
+      <button class="modal-btn yes" onclick="confirmClear()">YES, CLEAR</button>
+      <button class="modal-btn no" onclick="cancelClear()">NO, GO BACK</button>
+    </div>
+  </div>
+</div>
+
+<div class="winner-screen" id="winnerScreen">
+  <div class="confetti-container" id="confettiContainer"></div>
+  <div class="winner-title">&#x2605; WINNER! &#x2605;</div>
+  <div class="winner-message">EXACTLY $100.00!<br>You're a cash counting champion!</div>
+  <button class="restart-btn winner-restart" onclick="closeWinnerScreen()">NEW COUNT</button>
+</div>
+
+<div class="loser-screen" id="loserScreen">
+  <div class="loser-face">&#x1F61B;</div>
+  <div class="thumbs-down">&#x1F44E;</div>
+  <div class="loser-title">&#x2716; LOSER &#x2716;</div>
+  <div class="loser-message" id="loserMessage">Not quite $100 this time!</div>
+  <button class="restart-btn loser-restart" onclick="closeLoserScreen()">TRY AGAIN</button>
+</div>
+
+<script>
+var denominations = [
+  { id: 'nickels', label: 'NICKELS', value: 0.05, section: 'INDIVIDUAL COINS' },
+  { id: 'dimes', label: 'DIMES', value: 0.10 },
+  { id: 'quarters', label: 'QUARTERS', value: 0.25 },
+  { id: 'rollNickels', label: 'ROLL-NICKELS', value: 2.00, section: 'COIN ROLLS' },
+  { id: 'rollDimes', label: 'ROLL-DIMES', value: 5.00 },
+  { id: 'rollQuarters', label: 'ROLL-QUARTERS', value: 10.00 },
+  { id: 'ones', label: '$1 BILLS', value: 1, section: 'BILLS' },
+  { id: 'fives', label: '$5 BILLS', value: 5 },
+  { id: 'tens', label: '$10 BILLS', value: 10 },
+  { id: 'twenties', label: '$20 BILLS', value: 20 },
+  { id: 'fifties', label: '$50 BILLS', value: 50 },
+  { id: 'hundreds', label: '$100 BILLS', value: 100 }
+];
+
+var currentIndex = 0;
+
+function getStorageKey(id) { return 'cashCount_' + id; }
+
+function saveValue(id, val) { localStorage.setItem(getStorageKey(id), val); }
+
+function loadValue(id) { return localStorage.getItem(getStorageKey(id)) || ''; }
+
+function buildUI() {
+  var container = document.getElementById('fieldsContainer');
+  container.innerHTML = '';
+
+  denominations.forEach(function(d, i) {
+    if (d.section) {
+      var sec = document.createElement('div');
+      sec.className = 'section-label';
+      sec.textContent = d.section;
+      container.appendChild(sec);
+    }
+
+    var row = document.createElement('div');
+    row.className = 'row';
+    row.id = 'row_' + d.id;
+
+    var label = document.createElement('div');
+    label.className = 'denom-label';
+    label.textContent = d.label;
+
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.id = 'input_' + d.id;
+    input.value = loadValue(d.id);
+    input.addEventListener('input', function() {
+      saveValue(d.id, input.value);
+      updateTotals();
+    });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (i < denominations.length - 1) {
+          moveToField(i + 1);
+        } else {
+          input.blur();
+        }
+      }
+    });
+    input.addEventListener('focus', function() {
+      currentIndex = i;
+      highlightRow(i);
+      localStorage.setItem('cashCount_currentIndex', i);
+    });
+
+    var valDisplay = document.createElement('div');
+    valDisplay.className = 'value-display';
+    valDisplay.id = 'val_' + d.id;
+
+    var navDiv = document.createElement('div');
+    navDiv.className = 'nav-btns';
+
+    var prevBtn = document.createElement('button');
+    prevBtn.className = 'nav-btn prev-btn';
+    prevBtn.textContent = '\u25C0';
+    prevBtn.disabled = (i === 0);
+    prevBtn.addEventListener('click', function() { moveToField(i - 1); });
+
+    navDiv.appendChild(prevBtn);
+
+    row.appendChild(label);
+    row.appendChild(input);
+    row.appendChild(valDisplay);
+    row.appendChild(navDiv);
+    container.appendChild(row);
+  });
+
+  var savedIdx = localStorage.getItem('cashCount_currentIndex');
+  if (savedIdx !== null) currentIndex = parseInt(savedIdx);
+
+  updateTotals();
+  highlightRow(currentIndex);
+}
+
+function moveToField(idx) {
+  if (idx < 0 || idx >= denominations.length) return;
+  currentIndex = idx;
+  var input = document.getElementById('input_' + denominations[idx].id);
+  input.focus();
+  input.select();
+  highlightRow(idx);
+  localStorage.setItem('cashCount_currentIndex', idx);
+}
+
+function highlightRow(idx) {
+  denominations.forEach(function(d, i) {
+    var row = document.getElementById('row_' + d.id);
+    if (i === idx) {
+      row.classList.add('active-row');
+    } else {
+      row.classList.remove('active-row');
+    }
+  });
+}
+
+function getCurrentTotal() {
+  var total = 0;
+  denominations.forEach(function(d) {
+    var input = document.getElementById('input_' + d.id);
+    var qty = parseInt(input.value) || 0;
+    total += qty * d.value;
+  });
+  return total;
+}
+
+function updateTotals() {
+  var total = 0;
+  var breakdownLines = [];
+
+  denominations.forEach(function(d) {
+    var input = document.getElementById('input_' + d.id);
+    var qty = parseInt(input.value) || 0;
+    var subtotal = qty * d.value;
+    total += subtotal;
+
+    var valEl = document.getElementById('val_' + d.id);
+    valEl.textContent = subtotal > 0 ? '$' + subtotal.toFixed(2) : '';
+
+    if (qty > 0) {
+      breakdownLines.push(d.label + ': ' + qty + ' x $' + d.value.toFixed(2) + ' = $' + subtotal.toFixed(2));
+    }
+  });
+
+  document.getElementById('grandTotal').textContent = '$' + total.toFixed(2);
+
+  var bd = document.getElementById('breakdown');
+  bd.innerHTML = breakdownLines.length > 0 ? breakdownLines.join('<br>') : '<span>No entries yet</span>';
+
+  var statusEl = document.getElementById('statusIndicator');
+  if (total > 0 && total !== 100) {
+    var diff = Math.abs(total - 100).toFixed(2);
+    var direction = total > 100 ? 'OVER' : 'UNDER';
+    statusEl.style.color = '#aa8800';
+    statusEl.textContent = direction + ' BY $' + diff;
+  } else if (total === 100) {
+    statusEl.style.color = '#00ff41';
+    statusEl.textContent = 'HIT $100! PRESS TOTAL!';
+  } else {
+    statusEl.style.color = '#888';
+    statusEl.textContent = 'COUNT TO BEGIN';
+  }
+}
+
+function finishCounting() {
+  var total = getCurrentTotal();
+  var statusEl = document.getElementById('statusIndicator');
+
+  if (total === 0) {
+    statusEl.style.color = '#ff4444';
+    statusEl.textContent = 'ENTER SOME MONEY FIRST!';
+    setTimeout(function() { updateTotals(); }, 2000);
+    return;
+  }
+
+  if (total === 100) {
+    showWinner();
+  } else {
+    showLoser(total);
+  }
+}
+
+function showWinner() {
+  document.getElementById('winnerScreen').classList.add('active');
+  spawnConfetti();
+}
+
+function closeWinnerScreen() {
+  document.getElementById('winnerScreen').classList.remove('active');
+  document.getElementById('confettiContainer').innerHTML = '';
+}
+
+function showLoser(total) {
+  var diff = Math.abs(total - 100).toFixed(2);
+  var direction = total > 100 ? 'OVER' : 'UNDER';
+  document.getElementById('loserMessage').textContent = 'You were ' + direction + ' by $' + diff;
+  document.getElementById('loserScreen').classList.add('active');
+}
+
+function closeLoserScreen() {
+  document.getElementById('loserScreen').classList.remove('active');
+}
+
+function spawnConfetti() {
+  var container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  var colors = ['#00ff41', '#ffff00', '#ff8800', '#00aaff', '#ff00ff', '#ff4444'];
+  var shapes = ['*', '+', '#', '@', 'O', '!'];
+
+  for (var i = 0; i < 60; i++) {
+    var confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.top = '-20px';
+    confetti.style.color = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.fontSize = (14 + Math.random() * 16) + 'px';
+    confetti.style.animationDuration = (2 + Math.random() * 3) + 's';
+    confetti.style.animationDelay = Math.random() * 2 + 's';
+    container.appendChild(confetti);
+  }
+}
+
+function showClearModal() {
+  document.getElementById('clearModal').classList.add('active');
+}
+
+function confirmClear() {
+  denominations.forEach(function(d) {
+    localStorage.removeItem(getStorageKey(d.id));
+    var input = document.getElementById('input_' + d.id);
+    if (input) input.value = '';
+  });
+  localStorage.removeItem('cashCount_currentIndex');
+  currentIndex = 0;
+  updateTotals();
+  highlightRow(0);
+  document.getElementById('clearModal').classList.remove('active');
+}
+
+function cancelClear() {
+  document.getElementById('clearModal').classList.remove('active');
+}
+
+buildUI();
+
+setTimeout(function() {
+  var focusIdx = 0;
+  for (var i = 0; i < denominations.length; i++) {
+    var val = loadValue(denominations[i].id);
+    if (val === '') { focusIdx = i; break; }
+    focusIdx = i;
+  }
+  moveToField(focusIdx);
+}, 100);
+</script>
+</body>
+</html>
